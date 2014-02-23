@@ -16,7 +16,8 @@ class HOCRDocument:
 
     def add_page(self, page):
         '''Add a page element to the document'''
-        self._pages.append(page)
+        id = page.get('id')
+        self._pages[id] = page
 
     def get_page(self, id):
         '''
@@ -24,11 +25,17 @@ class HOCRDocument:
 
         :param id: id of the page element you wish to retrieve
         '''
-        self._pages
+        return self._pages[id]
 
     @property
     def pages(self):
-        return self._pages
+        return self._pages.values()
+
+    def to_dict(self):
+        '''Return the document as a dictionary. So it is serliazable'''
+        _datadict = self._data.copy()
+        _datadict['pages'] = self._pages.values()
+        return _datadict
 
     def __str__(self):
         return self._data.__str__()
