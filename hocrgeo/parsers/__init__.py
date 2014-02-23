@@ -1,1 +1,1 @@
-from . import HOCRParser
+from hocrgeo.parsers.hocrparser import HOCRParser
