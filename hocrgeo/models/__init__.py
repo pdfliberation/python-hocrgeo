@@ -1,1 +1,0 @@
-from hocrgeo.models.hocr import HOCRDocument
