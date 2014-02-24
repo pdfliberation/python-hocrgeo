@@ -1,4 +1,4 @@
 chardet
 lxml
 beautifulsoup4
-geojson
+Shapely
