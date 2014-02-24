@@ -65,7 +65,10 @@ class HOCRParser:
             '''Regular expression matching on a input_str that should contain hOCR bbox coordinates.'''
             match = self._bboxreg.search(input_str)
             if match:
-                return match.groupdict()
+                match_grp = match.groupdict()
+                for key,value in match_grp.iteritems():
+                    match_grp[key] = int(value)
+                return match_grp
             return None
 
         def _extract_features(element):
