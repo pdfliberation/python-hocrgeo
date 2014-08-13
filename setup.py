@@ -14,7 +14,7 @@ setup(
     license = hocrgeo.__license__,
     url='https://github.com/pdfliberation/python-hocrgeo',
     install_requires=['Shapely', 'lxml', 'beautifulsoup4'],
-    packages=['hocrgeo'],
+    packages=find_packages(exclude=["tests*"]),
     classifiers=[
         'Development Status :: 3 - Alpha',
 
