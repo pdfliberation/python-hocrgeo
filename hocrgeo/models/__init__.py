@@ -1,0 +1,1 @@
+from .hocr import HOCRDocument

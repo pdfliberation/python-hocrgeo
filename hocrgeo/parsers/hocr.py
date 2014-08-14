@@ -10,6 +10,8 @@ except NameError:
 from bs4 import BeautifulSoup
 import re
 
+from hocrgeo.models import HOCRDocument
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,7 +37,10 @@ class HOCRParser:
         '''
         self._rawdata = None
         self._bboxreg = re.compile(r'bbox (?P<x0>\d+) (?P<y0>\d+) (?P<x1>\d+) (?P<y1>\d+)')
+        self._imagereg = re.compile(r'image (\'|\")(.*)\1')
+        self._pagenoreg = re.compile(r'ppageno (\d+)')
         self._doc = None
+        self._parseddata = None
 
         if fs:
             self._rawdata = self._get_data_string(fs)
@@ -98,17 +103,25 @@ class HOCRParser:
             '''Regular expression matching on a fs_str that should contain hOCR bbox coordinates.'''
             match = self._bboxreg.search(fs_str)
             if match:
-                match_grp = match.groupdict()
-                for key,value in match_grp.items():
-                    match_grp[key] = int(value)
-                return match_grp
+                match_tup = match.groups()
+                match_list = []
+                for value in match_tup:
+                   match_list.append(int(value))
+                return tuple(match_list)
             return None
 
         def _extract_features(element):
             '''Extract basic hOCR features from a given element.'''
             features = {}
             features['id'] = element.get('id')
-            features['bbox'] = _extract_bbox(element.get('title', ''))
+            title_el = element.get('title', '')
+            image_match = self._imagereg.search(title_el)
+            if image_match:
+                features['image'] = image_match.group(2)
+            pageno_match = self._pagenoreg.search(title_el)
+            if pageno_match:
+                features['pageno'] = int(pageno_match.group(1))
+            features['bbox'] = _extract_bbox(title_el)
             return features
 
         if not self._rawdata:
@@ -116,15 +129,15 @@ class HOCRParser:
 
         soup = BeautifulSoup(self._rawdata, "lxml")
 
-        self._doc = {}
+        self._parseddata = {}
 
         # Extract ocr system metadata
         ocr_system = soup.find('meta', attrs={'name': 'ocr-system'})
-        self._doc['ocr-system'] = ocr_system.get('content', None) if ocr_system else None
+        self._parseddata['system'] = ocr_system.get('content', None) if ocr_system else None
 
         # Extract capabilities
         ocr_capabilities = soup.find('meta', attrs={'name': 'ocr-capabilities'})
-        self._doc['ocr-capabilities'] = ocr_capabilities.get('content', ' ').split(' ') if ocr_capabilities else None
+        self._parseddata['capabilities'] = ocr_capabilities.get('content', ' ').split(' ') if ocr_capabilities else None
 
         page_nodes, page_objects = _extract_objects_from_element(soup, 'div', 'ocr_page')
         page_tup = list(zip(page_nodes, page_objects))
@@ -149,7 +162,7 @@ class HOCRParser:
                         for w_node, w_obj in words_tup:
                             word_str = w_node.get_text(strip=True)
                             if word_str:
-                                logger.info(word_str)
+                                # logger.info(word_str)
                                 w_obj['text'] = w_node.get_text()
                         l_obj['words'] = word_objects
 
@@ -159,7 +172,9 @@ class HOCRParser:
 
             page_obj['careas'] = carea_objects
 
-        self._doc['pages'] = page_objects
+        self._parseddata['pages'] = page_objects
+
+        self._doc = HOCRDocument(self._parseddata)
 
 
 
