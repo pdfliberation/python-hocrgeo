@@ -124,7 +124,7 @@ class HOCRParser:
 
         # Extract capabilities
         ocr_capabilities = soup.find('meta', attrs={'name': 'ocr-capabilities'})
-        self._doc['ocr-capabilities'] = ocr_capabilities.get('content', ' ').split(' ')
+        self._doc['ocr-capabilities'] = ocr_capabilities.get('content', ' ').split(' ') if ocr_capabilities else None
 
         page_nodes, page_objects = _extract_objects_from_element(soup, 'div', 'ocr_page')
         page_tup = list(zip(page_nodes, page_objects))
